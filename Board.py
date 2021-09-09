@@ -79,6 +79,8 @@ class Board:
         return True
     
     
+
+
     # Check if it is possible for the white player to capture an opponent's piece
     def capture_possible(self):
         # Iterate over all the white pieces
@@ -100,6 +102,131 @@ class Board:
                         if self.isBlack(where) and self.isEmpty(where.add(yi, xi)):
                             return True
         return False
+
+    
+
+
+    def possible_moves(self):
+        pm=[]
+        if self.capture_possible()==False:
+            if self.normal_move_possible():
+                for white in self.whites:
+                    for i in [-1, 1]:
+
+                        if white.king:
+                            for i in range(1,10):
+                                if self.isEmpty(white.position().add(i, i)):
+                                    pm+=[white.position(),white.position().add(i,i)]
+                                else:
+                                    break
+                            for i in range(1,10):
+                                if self.isEmpty(white.position().add(-i, i)):
+                                    pm+=[white.position(),white.position().add(-i,i)]
+                                else:
+                                    break
+
+                            for i in range(1,10):
+                                if self.isEmpty(white.position().add(i, -i)):
+                                    pm+=[white.position(),white.position().add(i,-i)]
+                                else:
+                                    break
+                            for i in range(1,10):
+                                if self.isEmpty(white.position().add(-i, -i)):
+                                    pm+=[white.position(),white.position().add(-i,-i)]
+                                else:
+                                    break
+                        else:
+                            if self.isEmpty(white.position().add(1, i)):
+                                pm+=[white.position(),white.position().add(1, i)]
+
+        else:
+            for white in self.whites:
+                if not white.king:
+                    for i in [-1, 1]:
+                        if self.isBlack(white.position().add(1, i)):
+                            if self.isEmpty(white.position().add(2, 2*i)):
+                               
+                               nb = self.make_single_move(white.position(),white.position().add(2, 2*i),True, True)
+                               tab = [white.position(),white.position().add(2, 2*i)]
+                               pd = []
+                               tab.append( nb.perform_kill(white, tab, pd))
+                else:
+                # Iterate over possible directions of movement
+                    for xi in [-1, 1]:
+                        for yi in [-1, 1]:
+                            where = white.position().add(yi, xi)
+                            # Go in that direction, until an occuppied field is found or we reach the end of the board
+                            while (self.isEmpty(where)):
+                                where = where.add(yi, xi)
+                                
+                            if self.isBlack(where) and self.isEmpty(where.add(yi, xi)):
+                                return True
+            
+
+
+
+    def perform_kill(self,white, tab, original, king = False):
+        c = self.capture_possible_2(white)
+        
+        for i in c:
+            nt = tab
+            
+
+
+            if i.y-white.position().y > 1:
+                y=1
+            else:
+                y=-1
+            if i.x-white.position().x > 1:
+                x=1
+            else:
+                x=-1
+            pos = i.add(y,x)
+
+            nb = self.make_single_move(white.position(), i, True, False)
+            nt.append(i)
+            nt.append(nb.perform_kill(self.world[i.y][i.x], nt, original))
+
+            while(king and self.isEmpty(pos)):
+
+                nb = self.make_single_move(white.position(), i, True, False)
+                nt.append(i)
+                nt.append(nb.perform_kill(self.world[i.y][i.x], nt, original))
+            
+
+
+        if len(c)==0:
+            original.append(tab)
+            
+
+            
+            
+
+
+
+    def capture_possible_2(self, white):
+        # Iterate over all the white pieces
+        capt=[]
+            # Consider different cases, depending on wether a piece is a king or not
+        if not white.king:
+            for i in [-1, 1]:
+                for j in [-1, 1]:
+
+                    if self.isBlack(white.position().add(j, i)):
+                        if self.isEmpty(white.position().add(2*j, 2*i)):
+                            capt+=[white.position().add(2*j, 2*i)]
+        else:
+            # Iterate over possible directions of movement
+            for xi in [-1, 1]:
+                for yi in [-1, 1]:
+                    where = white.position().add(yi, xi)
+                    # Go in that direction, until an occuppied field is found or we reach the end of the board
+                    while (self.isEmpty(where)):
+                        where = where.add(yi, xi)
+                    if self.isBlack(where) and self.isEmpty(where.add(yi, xi)):
+                        capt+=where.add(yi, xi)
+
+        return capt
     
     
     # Check if a non-capturing move is possible
